@@ -5,10 +5,10 @@ import { UsuariosModule } from './usuarios/usuarios.module';
 import { EmpleadosModule } from './empleados/empleados.module';
 import { RolesModule } from './roles/roles.module';
 import { OtpTokensModule } from './otp_tokens/otp_tokens.module';
-import { AuditoriasLogModule } from './auditorias_log/auditorias_log.module';
+import { AuditoriasModule } from './auditorias/auditorias.module';
 
 @Module({
-  imports: [UsuariosModule, EmpleadosModule, RolesModule, OtpTokensModule, AuditoriasLogModule],
+  imports: [UsuariosModule, EmpleadosModule, RolesModule, OtpTokensModule, AuditoriasModule],
   controllers: [AppController],
   providers: [AppService],
 })
