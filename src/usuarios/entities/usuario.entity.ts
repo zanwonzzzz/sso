@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, ManyToOne,OneToOne,OneToMany,JoinColumn } from 'typeorm';
 import { Role } from 'src/roles/entities/role.entity';
+import { Empleado } from 'src/empleados/entities/empleado.entity';
 import { OtpToken } from 'src/otp_tokens/entities/otp_token.entity';
 import { Auditoria } from 'src/auditorias/entities/auditoria.entity';
 
@@ -20,6 +21,10 @@ export class Usuario
   @JoinColumn({ name: 'rol_id' })
   rol!: Role;
 
+  @OneToOne(() => Empleado, { eager: true })
+  @JoinColumn({ name: 'empleado_id' })
+  empleado!: Empleado;
+
   @Column({ type: 'varchar', length:20})
   username!: string;
 
@@ -36,7 +41,7 @@ export class Usuario
   otpToken?: OtpToken;
 
   @OneToMany(() => Auditoria, (auditoria) => auditoria.usuario)
-  auditorias!: Auditoria[];
+  auditoria!: Auditoria[];
 
   @CreateDateColumn()
   createdAt!: Date;

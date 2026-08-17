@@ -7,11 +7,6 @@ import { UpdateOtpTokenDto } from './dto/update-otp_token.dto';
 export class OtpTokensController {
   constructor(private readonly otpTokensService: OtpTokensService) {}
 
-  @Post()
-  create(@Body() createOtpTokenDto: CreateOtpTokenDto) {
-    return this.otpTokensService.create(createOtpTokenDto);
-  }
-
   @Get()
   findAll() {
     return this.otpTokensService.findAll();
@@ -21,12 +16,7 @@ export class OtpTokensController {
   findOne(@Param('id') id: string) {
     return this.otpTokensService.findOne(+id);
   }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateOtpTokenDto: UpdateOtpTokenDto) {
-    return this.otpTokensService.update(+id, updateOtpTokenDto);
-  }
-
+ 
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.otpTokensService.remove(+id);

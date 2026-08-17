@@ -1,95 +1,98 @@
 import { DataSource, Repository } from 'typeorm';
 import { OidcPayload } from '../entities/oidc-payload.entity';
 
+/**
+ * EL PUENTE (Camino A).
+ *
+ * Problema: node-oidc-provider instancia el adapter por su cuenta, asi:
+ *   new TypeOrmAdapter('Session')
+ * O sea, SOLO le pasa el nombre del modelo (el type), NO el DataSource.
+ * Pero el adapter necesita el DataSource para hablar con MySQL.
+ *
+ * Solucion: guardamos el DataSource en una variable de este modulo. Al arrancar
+ * la app, llamamos initOidcAdapter(dataSource) UNA vez, y a partir de ahi todas
+ * las instancias que cree la libreria pueden usarlo.
+ */
+let dataSourceRef: DataSource | null = null;
+
+export function initOidcAdapter(ds: DataSource): void {
+  dataSourceRef = ds;
+}
+
 export class TypeOrmAdapter {
   private repo: Repository<OidcPayload>;
 
-  constructor(private dataSource: DataSource) {
+  // La libreria pasa solo 'name' (el type). El DataSource lo tomamos del puente.
+  constructor(
+    private name: string,
+    private dataSource: DataSource,
+  ) {
     this.repo = this.dataSource.getRepository(OidcPayload);
   }
 
-  async upsert(id: string, payload: any, expiresIn?: number) {
-    const expiresAt = typeof expiresIn === 'number' ? new Date(Date.now() + expiresIn * 1000) : null;
-    const grantId = payload.grantId || payload.grant_id || null;
-    const userCode = payload.user_code || null;
+  async upsert(id: string, payload: any, expiresIn?: number): Promise<void> {
+    const expiresAt =
+      typeof expiresIn === 'number'
+        ? new Date(Date.now() + expiresIn * 1000)
+        : null;
 
-    const entity = this.repo.create({
+    await this.repo.save({
       id,
-      payload: JSON.stringify(payload),
-      grantId,
-      userCode,
-      consumed: !!payload.consumed,
+      type: this.name,
+      payload, // objeto directo: la columna 'json' lo serializa sola
+      grantId: payload.grantId ?? null,
+      userCode: payload.userCode ?? null,
+      uid: payload.uid ?? null,
+      consumedAt: payload.consumed ? new Date(payload.consumed * 1000) : null,
       expiresAt,
     } as Partial<OidcPayload>);
-
-    await this.repo.save(entity);
   }
 
-  async find(id: string) {
-    const row = await this.repo.findOneBy({ id });
+  async find(id: string): Promise<any | undefined> {
+    const row = await this.repo.findOneBy({ id, type: this.name });
     if (!row) return undefined;
+
+    // Si expiro, lo borramos y hacemos como que no existe.
     if (row.expiresAt && row.expiresAt.getTime() < Date.now()) {
-      await this.repo.delete({ id });
+      await this.repo.delete({ id, type: this.name });
       return undefined;
     }
-    try {
-      return JSON.parse(row.payload);
-    } catch {
-      return undefined;
+
+    return this.toPayload(row);
+  }
+
+  async findByUid(uid: string): Promise<any | undefined> {
+    const row = await this.repo.findOneBy({ uid, type: this.name });
+    return row ? this.toPayload(row) : undefined;
+  }
+
+  async findByUserCode(userCode: string): Promise<any | undefined> {
+    const row = await this.repo.findOneBy({ userCode, type: this.name });
+    return row ? this.toPayload(row) : undefined;
+  }
+
+  async consume(id: string): Promise<void> {
+    await this.repo.update({ id, type: this.name }, { consumedAt: new Date() });
+  }
+
+  async destroy(id: string): Promise<void> {
+    await this.repo.delete({ id, type: this.name });
+  }
+
+  async revokeByGrantId(grantId: string): Promise<void> {
+    await this.repo.delete({ grantId, type: this.name });
+  }
+
+  /**
+   * La libreria espera que el campo de consumo venga DENTRO del payload como
+   * 'consumed' (epoch en segundos). Como nosotros lo guardamos aparte en la
+   * columna consumedAt, lo volvemos a inyectar al payload al leer.
+   */
+  private toPayload(row: OidcPayload): any {
+    const payload = row.payload;
+    if (row.consumedAt) {
+      payload.consumed = Math.floor(row.consumedAt.getTime() / 1000);
     }
-  }
-
-  async findByUserCode(userCode: string) {
-    const row = await this.repo.findOneBy({ userCode });
-    if (!row) return undefined;
-    try {
-      return JSON.parse(row.payload);
-    } catch {
-      return undefined;
-    }
-  }
-
-  async findByUid(uid: string) {
-    // Some payloads use uid as id, some embed it in payload. Try both.
-    const byId = await this.repo.findOneBy({ id: uid });
-    if (byId) {
-      try {
-        return JSON.parse(byId.payload);
-      } catch {
-        return undefined;
-      }
-    }
-    const row = await this.repo
-      .createQueryBuilder('p')
-      .where("JSON_EXTRACT(p.payload, '$.uid') = :uid", { uid })
-      .getOne();
-    if (!row) return undefined;
-    try {
-      return JSON.parse(row.payload);
-    } catch {
-      return undefined;
-    }
-  }
-
-  async destroy(id: string) {
-    await this.repo.delete({ id });
-  }
-
-  async consume(id: string) {
-    await this.repo.update({ id }, { consumed: true });
-  }
-
-  async revokeByGrantId(grantId: string) {
-    await this.repo.delete({ grantId });
-  }
-
-  // Optional helper to clean expired rows
-  async cleanExpired() {
-    await this.repo
-      .createQueryBuilder()
-      .delete()
-      .from(OidcPayload)
-      .where('expires_at IS NOT NULL AND expires_at < :now', { now: new Date() })
-      .execute();
+    return payload;
   }
 }

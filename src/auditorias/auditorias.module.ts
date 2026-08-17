@@ -6,4 +6,6 @@ import { AuditoriasController } from './auditorias.controller';
   controllers: [AuditoriasController],
   providers: [AuditoriasService],
 })
-export class AuditoriasModule {}
+export class AuditoriasModule {
+  
+}
