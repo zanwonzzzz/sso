@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { urlencoded, json } from 'express';
@@ -10,7 +11,7 @@ async function bootstrap() {
 
   // CORS: permitir que tu Vue (5173) le pegue al IdP (3000)
   app.enableCors({
-    origin: 'http://localhost:5173',   // la URL de tu Vue
+    origin:  process.env.FRONT_URL ?? 'http://192.168.1.12:5173', 
     credentials: true,                  // para que viajen las cookies
   });
 
@@ -18,6 +19,6 @@ async function bootstrap() {
   app.use('/oidc/interaction', urlencoded({ extended: true }));
   app.use('/oidc/interaction', json());
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3000,process.env.HOST ?? '192.168.1.12');
 }
 bootstrap();

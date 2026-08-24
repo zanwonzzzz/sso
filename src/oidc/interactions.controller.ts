@@ -7,7 +7,7 @@ import { UsuariosService } from '../usuarios/usuarios.service';
 import { OtpTokensService } from '../otp_tokens/otp_tokens.service';
 import { AppException } from 'src/common/errors/app.exception';
 
-const VUE_URL = 'http://localhost:5173';
+const VUE_URL = process.env.FRONT_URL ?? 'http://192.168.1.12:5173';
 
 @Controller('oidc/interaction')
 export class InteractionsController {

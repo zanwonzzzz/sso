@@ -23,7 +23,7 @@ export class OidcConfigService implements OidcModuleOptionsFactory {
 
   createModuleOptions(): OidcModuleOptions {
     return {
-      issuer: 'http://localhost:3000',
+      issuer: process.env.ISSUER_URL ?? 'http://192.168.1.12:3000',
       path: '/oidc',
       oidc: {
         jwks: JSON.parse(process.env.OIDC_JWKS as string),
@@ -54,9 +54,18 @@ export class OidcConfigService implements OidcModuleOptionsFactory {
             client_secret: 'un-secreto-cualquiera',
             grant_types: ['authorization_code', 'refresh_token'],
             response_types: ['code'],
-            redirect_uris: ['http://localhost:4000/auth/callback'],
+            redirect_uris: ['http://192.168.1.12:4000/auth/callback'],
             token_endpoint_auth_method: 'client_secret_post',
             // scope: que grupos de datos puede pedir este client
+            scope: 'openid profile offline_access',
+          },
+          {
+            client_id: 'movil-trace-ios',
+            application_type: 'native', 
+            grant_types: ['authorization_code', 'refresh_token'],
+            response_types: ['code'],
+            redirect_uris: ['movil-trace://callback'],
+            token_endpoint_auth_method: 'none',
             scope: 'openid profile offline_access',
           },
         ],
