@@ -54,7 +54,7 @@ export class OidcConfigService implements OidcModuleOptionsFactory {
             client_secret: 'un-secreto-cualquiera',
             grant_types: ['authorization_code', 'refresh_token'],
             response_types: ['code'],
-            redirect_uris: ['http://192.168.1.12:4000/auth/callback'],
+            redirect_uris: [`${process.env.API_TRACE_URL}/auth/callback`],
             token_endpoint_auth_method: 'client_secret_post',
             // scope: que grupos de datos puede pedir este client
             scope: 'openid profile offline_access',
