@@ -47,7 +47,7 @@ private async enviarOtp(codigo: string): Promise<void> {
   console.log(`>>> OTP para el celular ${codigo}`);
   console.log('==========================================');
 
-  const negocioUrl = process.env.API_NEGOCIO_URL;
+  const negocioUrl = process.env.API_TRACE_URL;
   console.log('==========================================');
   console.log(`>>> OTP para el celular ${negocioUrl}`);
   console.log('==========================================');
