@@ -31,8 +31,14 @@ export class OidcConfigService implements OidcModuleOptionsFactory {
 
         cookies: {
             keys: ['una-llave-secreta-cualquiera', 'otra-llave-secreta'],
-            short: { secure: process.env.NODE_ENV === 'production' },
-            long: { secure: process.env.NODE_ENV === 'production' },
+            short: { 
+              secure: process.env.NODE_ENV === 'production',
+              sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            },
+            long: { 
+              secure: process.env.NODE_ENV === 'production',
+              sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            },
         },
 
         interactions: {
