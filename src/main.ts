@@ -9,6 +9,7 @@ async function bootstrap() {
     bodyParser: false,
   });
 
+  app.getHttpAdapter().getInstance().set('trust proxy', true);
   // CORS: permitir que tu Vue (5173) le pegue al IdP (3000)
   app.enableCors({
     origin:  process.env.FRONT_URL ?? 'http://192.168.1.12:5173', 

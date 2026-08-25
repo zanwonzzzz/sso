@@ -23,6 +23,7 @@ export class OidcConfigService implements OidcModuleOptionsFactory {
 
   createModuleOptions(): OidcModuleOptions {
     return {
+      proxy: true,
       issuer: process.env.ISSUER_URL ?? 'http://192.168.1.12:3000',
       path: '/oidc',
       oidc: {
@@ -30,8 +31,8 @@ export class OidcConfigService implements OidcModuleOptionsFactory {
 
         cookies: {
             keys: ['una-llave-secreta-cualquiera', 'otra-llave-secreta'],
-            short: { secure: false },   // <- permite cookies en http (solo dev)
-            long: { secure: false },    // <- permite cookies en http (solo dev)
+            short: { secure: process.env.NODE_ENV === 'production' },
+            long: { secure: process.env.NODE_ENV === 'production' },
         },
 
         interactions: {
