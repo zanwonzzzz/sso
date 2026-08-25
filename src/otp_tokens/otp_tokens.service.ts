@@ -34,27 +34,41 @@ export class OtpTokensService {
     await this.otpRepo.save(otp);
 
     // "Envia" el codigo (por ahora, console.log)
-    await this.enviarOtp(usuario.celular, codigo);
+    await this.enviarOtp(codigo);
 
     return codigo;
   }
 
-  // ============================================================
-  // 2) ENVIAR: por ahora solo console.log.
-  //    Al final, cambias SOLO esta funcion por SMS real.
-  // ============================================================
-  private async enviarOtp(celular: string, codigo: string): Promise<void> {
-    console.log('==========================================');
-    console.log(`>>> OTP para el celular ${celular}: ${codigo}`);
-    console.log('==========================================');
+// ============================================================
+// 2) ENVIAR: llama al servicio de WhatsApp de api-negocio
+// ============================================================
+private async enviarOtp(codigo: string): Promise<void> {
+  console.log('==========================================');
+  console.log(`>>> OTP para el celular ${codigo}`);
+  console.log('==========================================');
 
-    // DESPUES (SMS real), algo como:
-    // await fetch('https://api.sms.to/sms/send', {
-    //   method: 'POST',
-    //   headers: { 'Authorization': 'Bearer TU_API_KEY', 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ to: celular, message: `Tu codigo es: ${codigo}` }),
-    // });
+  const negocioUrl = process.env.API_NEGOCIO_URL;
+  console.log('==========================================');
+  console.log(`>>> OTP para el celular ${negocioUrl}`);
+  console.log('==========================================');
+
+  try {
+    const res = await fetch(`${negocioUrl}/auth/enviar/otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ codigo }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      console.error(`>>> Error enviando OTP por WhatsApp: ${res.status} - ${err}`);
+    }
+  } catch (error) {
+    console.error('>>> Error de red al llamar api-negocio:', error);
   }
+}
 
   // ============================================================
   // 3) VALIDAR: revisa si el codigo es correcto y no expiro
